@@ -4,7 +4,6 @@
 
     This is the App Service for a basic microservice demo application.
     The application was designed to provide a simple demo for Cisco Mantl
-
 '''
 
 __author__ = 'hapresto'
