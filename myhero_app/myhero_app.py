@@ -12,7 +12,7 @@ from flask import Flask, make_response, request, jsonify
 import datetime
 import urllib
 import json
-import os
+import os, sys
 
 app = Flask(__name__)
 
@@ -65,6 +65,7 @@ if __name__=='__main__':
             data_server = get_data_server
 
     print "Data Server: " + data_server
+    sys.stderr.write("Data Server: " + data_server + "\n")
 
     app.run(debug=True, host='0.0.0.0', port=int("5000"))
 
