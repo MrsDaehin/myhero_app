@@ -46,8 +46,7 @@ def vote(hero):
             return authz[1]
         u = data_server + "/vote/" + hero
         data_requests_headers = {"key": data_key}
-        # TODO - this should be a POST request but DATA service needs to be updated first
-        page = requests.get(u, headers = data_requests_headers)
+        page = requests.post(u, headers = data_requests_headers)
         result = page.json()["result"]
         print result
         if (result == "1"):
