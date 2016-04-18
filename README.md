@@ -31,8 +31,50 @@ Required
 
 # Usage
 
-    python myhero_app/myhero_app.py -a http://DATASERVER-ADDRESS
+In order to run, the service needs 3 pieces of information to be provided:
+1. Data Server Address
+2. Data Server Authentication Key to Use
+3. Application Server Authentication Key to Require
+
+These details can be provided in one of three ways.
+1. As a command line argument
+    - `python myhero_app/myhero_app.py --dataserver "http://myhero-data.server.com" --datakey "DATA AUTH KEY" --appsecret "APP AUTH KEY" `
+2. As environment variables
+    - `export myhero_data_server="http://myhero-data.server.com"`
+    - `export myhero_data_key="DATA AUTH KEY"`
+    - `export myhero_app_key="APP AUTH KEY"`
+    - `python myhero_app/myhero_app.py`
+3. As raw input when the application is run
+    - `python myhero_app/myhero_app.py`
+    - `What is the data server address? http://myhero-data.server.com`
+    - `Data Server Key: DATA AUTH KEY`
+    - `App Server Key: APP AUTH KEY`
+
+A command line argument overrides an environment variable, and raw input is only used if neither of the other two options provide needed details.
 
 # Accessing
 
-    http://localhost:5000/hero_list
+Initial and Basic APIs.
+These are v1 APIs that require no authentication and will eventually be removed
+* Basic List of Hero Choices
+  * `curl http://localhost:5000/hero_list`
+* Current results calculations
+  * `curl http://localhost:5000/results`
+* Place a vote for an option
+  * `curl http://localhost:5000/vote/<HERO>`
+
+New v2 APIs
+These newer APIs require authentication as well as support more features
+* Get the current list of options for voting
+  * `curl -X GET -H "key: APP AUTH KEY" http://localhost:5000/options`
+* Add a new option to the list
+  * `curl -X PUT -H "key: APP AUTH KEY" http://localhost:5000/options -d '{"option":"Deadpool"}'`
+* Replace the entire options list
+  * `curl-X POST -H "key: APP AUTH KEY" http://localhost:5000/options -d @sample_post.json`
+  * Data should be of same format as a GET request
+* Delete a single option from the list
+  * `curl -X DELETE -H "key: APP AUTH KEY" http://localhost:5000/options/Deadpool`
+* Place a Vote for an option
+  * `curl -X POST -H "key: APP AUTH KEY" http://localhost:5000/vote/Deadpool`
+* Get current results
+  * `curl -X GET -H "key: APP AUTH KEY" http://localhost:5000/results`
