@@ -24,12 +24,13 @@ Required
 
 * flask
 * ArgumentParser
+* requests
 
-# Installation
+# Environment Installation
 
     pip install -r requirements.txt
 
-# Usage
+# Basic Usage
 
 In order to run, the service needs 3 pieces of information to be provided:
 1. Data Server Address
@@ -78,3 +79,16 @@ These newer APIs require authentication as well as support more features
   * `curl -X POST -H "key: APP AUTH KEY" http://localhost:5000/vote/Deadpool`
 * Get current results
   * `curl -X GET -H "key: APP AUTH KEY" http://localhost:5000/results`
+
+# Local Development with Vagrant
+
+I've included the configuration files needed to do local development with Vagrant in the repo.  Vagrant will still use Docker for local development and is configured to spin up a CentOS7 host VM for running the container.
+
+To start local development run:
+1.  `vagrant up`
+    - You may need to run this twice.  The first time to start the docker host, and the second to start the container.
+2.  Now you can interact with the API or interface at localhost:15001 (configured in Vagrantfile and Vagrantfile.host)
+    - example:  from your local machine `curl -H "key: DevApp" http://localhost:15001/options`
+    - Environment Variables are configured in Vagrantfile for development
+
+Each of the services in the application (i.e. myhero_web, myhero_app, and myhero_data) include Vagrant support to allow working locally on all three simultaneously.
