@@ -33,23 +33,23 @@ Required
 # Basic Usage
 
 In order to run, the service needs 3 pieces of information to be provided:
-1. Data Server Address
-2. Data Server Authentication Key to Use
-3. Application Server Authentication Key to Require
+* Data Server Address
+* Data Server Authentication Key to Use
+* Application Server Authentication Key to Require
 
 These details can be provided in one of three ways.
-1. As a command line argument
-    - `python myhero_app/myhero_app.py --dataserver "http://myhero-data.server.com" --datakey "DATA AUTH KEY" --appsecret "APP AUTH KEY" `
-2. As environment variables
-    - `export myhero_data_server="http://myhero-data.server.com"`
-    - `export myhero_data_key="DATA AUTH KEY"`
-    - `export myhero_app_key="APP AUTH KEY"`
-    - `python myhero_app/myhero_app.py`
-3. As raw input when the application is run
-    - `python myhero_app/myhero_app.py`
-    - `What is the data server address? http://myhero-data.server.com`
-    - `Data Server Key: DATA AUTH KEY`
-    - `App Server Key: APP AUTH KEY`
+* As a command line argument
+  - `python myhero_app/myhero_app.py --dataserver "http://myhero-data.server.com" --datakey "DATA AUTH KEY" --appsecret "APP AUTH KEY" `
+* As environment variables
+  - `export myhero_data_server="http://myhero-data.server.com"`
+  - `export myhero_data_key="DATA AUTH KEY"`
+  - `export myhero_app_key="APP AUTH KEY"`
+  - `python myhero_app/myhero_app.py`
+* As raw input when the application is run
+  - `python myhero_app/myhero_app.py`
+  - `What is the data server address? http://myhero-data.server.com`
+  - `Data Server Key: DATA AUTH KEY`
+  - `App Server Key: APP AUTH KEY`
 
 A command line argument overrides an environment variable, and raw input is only used if neither of the other two options provide needed details.
 
@@ -85,10 +85,10 @@ These newer APIs require authentication as well as support more features
 I've included the configuration files needed to do local development with Vagrant in the repo.  Vagrant will still use Docker for local development and is configured to spin up a CentOS7 host VM for running the container.
 
 To start local development run:
-1.  `vagrant up`
-    - You may need to run this twice.  The first time to start the docker host, and the second to start the container.
-2.  Now you can interact with the API or interface at localhost:15001 (configured in Vagrantfile and Vagrantfile.host)
-    - example:  from your local machine `curl -H "key: DevApp" http://localhost:15001/options`
-    - Environment Variables are configured in Vagrantfile for development
+* `vagrant up`
+  - You may need to run this twice.  The first time to start the docker host, and the second to start the container.
+* Now you can interact with the API or interface at localhost:15001 (configured in Vagrantfile and Vagrantfile.host)
+  - example:  from your local machine `curl -H "key: DevApp" http://localhost:15001/options`
+  - Environment Variables are configured in Vagrantfile for development
 
 Each of the services in the application (i.e. myhero_web, myhero_app, and myhero_data) include Vagrant support to allow working locally on all three simultaneously.
