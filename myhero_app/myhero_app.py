@@ -119,10 +119,10 @@ def options_route():
             #     "Ironman"
             # ]
             # }
-            print("New Options: " + options)
             data_requests_headers = {"key": data_key}
             page = requests.post(u, json = data, headers = data_requests_headers)
             options = page.json()
+            print("New Options: " + options)
             status = 201
         except KeyError:
             error = {"Error": "API expects dictionary object with single element with key 'option' and value a list of options"}
