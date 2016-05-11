@@ -312,5 +312,5 @@ if __name__=='__main__':
                 raise ValueError("Message Queue Not Found")
     sys.stderr.write("MQTT Host: %s \nMQTT Port: %s\n" % (mqtt_host, mqtt_port))
 
-    app.run(debug=True, host='0.0.0.0', port=int("5001"))
+    app.run(debug=True, host='0.0.0.0', port=int("5000"))
 
