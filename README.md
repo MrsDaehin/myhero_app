@@ -12,11 +12,24 @@ Other services are:
 * Data - [hpreston/myhero_data](https://github.com/hpreston/myhero_data)
 * App - [hpreston/myhero_app](https://github.com/hpreston/myhero_app)
 * Web - [hpreston/myhero_web](https://github.com/hpreston/myhero_web)
+* Ernst - [hpreston/myhero_ernst](https://github.com/hpreston/myhero_ernst)
+  * Optional Service used along with an MQTT server when App is in "queue" mode
+* Spark Bot - [hpreston/myhero_spark](https://github.com/hpreston/myhero_spark)
+  * Optional Service that allows voting through IM/Chat with a Cisco Spark Bot
+* Tropo App - [hpreston/myhero_tropo](https://github.com/hpreston/myhero_tropo)
+  * Optional Service that allows voting through TXT/SMS messaging
+
 
 The docker containers are available at
 * Data - [hpreston/myhero_data](https://hub.docker.com/r/hpreston/myhero_data)
 * App - [hpreston/myhero_app](https://hub.docker.com/r/hpreston/myhero_app)
 * Web - [hpreston/myhero_web](https://hub.docker.com/r/hpreston/myhero_web)
+* Ernst - [hpreston/myhero_ernst](https://hub.docker.com/r/hpreston/myhero_ernst)
+  * Optional Service used along with an MQTT server when App is in "queue" mode
+* Spark Bot - [hpreston/myhero_spark](https://hub.docker.com/r/hpreston/myhero_spark)
+  * Optional Service that allows voting through IM/Chat with a Cisco Spark Bot
+* Tropo App - [hpreston/myhero_tropo](https://hub.docker.com/r/hpreston/myhero_tropo)
+  * Optional Service that allows voting through TXT/SMS messaging
 
 ## Basic Application Details
 
@@ -52,6 +65,26 @@ These details can be provided in one of three ways.
   - `App Server Key: APP AUTH KEY`
 
 A command line argument overrides an environment variable, and raw input is only used if neither of the other two options provide needed details.
+
+# Vote Processing Mode
+
+When an API request comes in to place a vote, there are two modes that the APP service can run in.
+
+The default mode is "direct".  In this mode, the APP service will directly call the data service to place the vote.
+
+There is an optional mode of "queue".  In this mode, rather than sending a direct API call to the data service for each vote, the APP service will publish the vote to an MQTT Queue where a seperate service, [myhero_ernst](www.github.com/hpreston/myhero_ernst), subscribes to the queue and processes the votes.  The reason this option is in place is to prevent overloading the data service if a high number and rate of votes is expected.  By funnelling through a queueing service, we protect the data service.
+
+To leverage the direct mode, nothing needs to be done, this is the default.  To leverage the queue mode, you need to take these additional steps.
+
+* Deploy an MQTT server to queue the votes as they come in
+  * The [MyHero_Demo](www.github.com/hpreston/myhero_demo) application leverages [Mosca](https://hub.docker.com/r/matteocollina/mosca/) as the MQTT server.
+* Deploy the  [myhero_ernst](www.github.com/hpreston/myhero_ernst) service to subscribe and act on votes as they come through
+* Activate the mode at run time by either passing in a command line arguement or setting an additional environment variable
+  * Argument Method
+    * `python myhero_app/myhero_app.py --mode queue`
+  * Environment Variable Method
+    * `export myhero_app_mode=queue`
+    * `python myhero_app/myhero_app.py`
 
 # Accessing
 
