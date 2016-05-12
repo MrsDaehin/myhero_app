@@ -20,6 +20,7 @@ app = Flask(__name__)
 
 mqtt_host = ""
 mqtt_port = 0
+mode = "direct"
 
 # Setup MQTT Topic Info
 lhost = socket.gethostname()
@@ -43,16 +44,18 @@ def vote(hero):
         if not authz[0]:
             return authz[1]
 
-        print request.headers
-
-        # Publish Message
-        publish_vote(hero)
-        result = "1"
-        # u = data_server + "/vote/" + hero
-        # data_requests_headers = {"key": data_key}
-        # page = requests.post(u, headers = data_requests_headers)
-        # result = page.json()["result"]
-        print result
+        # Depending on mode, either send direct to data server or publish
+        if mode == "direct":
+            # print("Vote direct")
+            u = data_server + "/vote/" + hero
+            data_requests_headers = {"key": data_key}
+            page = requests.post(u, headers = data_requests_headers)
+            result = page.json()["result"]
+        elif mode == "queue":
+            # print("Vote Q")
+            # Publish Message
+            publish_vote(hero)
+            result = "1"
         if (result == "1"):
             msg = {"result":"vote submitted"}
         else:
@@ -62,7 +65,6 @@ def vote(hero):
             json.dumps(msg, sort_keys=True, indent=4, separators=(',', ': ')),
             content_type='application/json',
             status=status)
-
         return resp
 
 # TODO - Add Authentication
@@ -188,7 +190,7 @@ def valid_request_check(request):
 
 def publish_vote(vote):
     # Basic Publish to a MQTT Queue
-    print("Publishing vote.")
+    # print("Publishing vote.")
     t = lhost + "-" + str(random.randint(0,9))
     publish.single("MyHero-Votes/" + t, payload=vote, hostname=mqtt_host, port=mqtt_port, retain=True)
     return ""
@@ -244,6 +246,9 @@ if __name__=='__main__':
     parser.add_argument(
         "-p", "--mqttport", help="MQTT Server Port", required=False
     )
+    parser.add_argument(
+        "--mode", help="Voting Processing Mode - direct or queue", required=False
+    )
 
     args = parser.parse_args()
 
@@ -283,35 +288,45 @@ if __name__=='__main__':
     print "App Server Key: " + app_key
     sys.stderr.write("App Server Key: " + app_key + "\n")
 
-    # To find the MQTT Server, two options are possible
-    # In order of priority
-    # 1.  Explicitly Set mqtthost and mqttport details from Arguments or Environment Variables
-    # 2.  Leveraging DNS to lookup an SRV Record to get HOST IP and PORT information
-    # Try #1 Option for Explicitly Set Options
-    mqtt_host = args.mqtthost
-    mqtt_port = args.mqttport
-    if (mqtt_host == None and mqtt_port == None):
-        mqtt_host = os.getenv("myhero_mqtt_host")
-        mqtt_port = os.getenv("myhero_mqtt_port")
+    # The API Service can run in two modes, direct or queue
+    # In direct mode votes are sent direct to the data server
+    # In queue mode votes are published to an MQTT server
+    # Default mode is direct
+    mode = args.mode
+    if mode == None:
+        mode = os.getenv("myhero_app_mode")
+        if mode == None: mode = "direct"
+    sys.stderr.write("App Server Server Mode is: " + mode + "\n")
+    if mode == "queue":
+        # To find the MQTT Server, two options are possible
+        # In order of priority
+        # 1.  Explicitly Set mqtthost and mqttport details from Arguments or Environment Variables
+        # 2.  Leveraging DNS to lookup an SRV Record to get HOST IP and PORT information
+        # Try #1 Option for Explicitly Set Options
+        mqtt_host = args.mqtthost
+        mqtt_port = args.mqttport
         if (mqtt_host == None and mqtt_port == None):
-            # Move onto #2 and Try DNS Lookup
-            mqtt_server = args.mqttserver
-            if (mqtt_server == None):
-                mqtt_server = os.getenv("myhero_mqtt_server")
+            mqtt_host = os.getenv("myhero_mqtt_host")
+            mqtt_port = os.getenv("myhero_mqtt_port")
+            if (mqtt_host == None and mqtt_port == None):
+                # Move onto #2 and Try DNS Lookup
+                mqtt_server = args.mqttserver
                 if (mqtt_server == None):
-                    mqtt_server = raw_input("What is the MQTT Server FQDN for an SRV Lookup? ")
-            sys.stderr.write("MQTT Server: " + mqtt_server + "\n")
-            # Lookup and resolve the IP and Port for the MQTT Server
-            try:
-                records = srv_lookup(mqtt_server)
-                if len(records) != 1: raise Exception("More than 1 SRV Record Returned")
-                # To find the HOST IP address need to take the returned hostname from the
-                # SRV check and do an IP lookup on it
-                mqtt_host = str(ip_lookup(records[0][0]))
-                mqtt_port = records[0][1]
-            except ValueError:
-                raise ValueError("Message Queue Not Found")
-    sys.stderr.write("MQTT Host: %s \nMQTT Port: %s\n" % (mqtt_host, mqtt_port))
+                    mqtt_server = os.getenv("myhero_mqtt_server")
+                    if (mqtt_server == None):
+                        mqtt_server = raw_input("What is the MQTT Server FQDN for an SRV Lookup? ")
+                sys.stderr.write("MQTT Server: " + mqtt_server + "\n")
+                # Lookup and resolve the IP and Port for the MQTT Server
+                try:
+                    records = srv_lookup(mqtt_server)
+                    if len(records) != 1: raise Exception("More than 1 SRV Record Returned")
+                    # To find the HOST IP address need to take the returned hostname from the
+                    # SRV check and do an IP lookup on it
+                    mqtt_host = str(ip_lookup(records[0][0]))
+                    mqtt_port = records[0][1]
+                except ValueError:
+                    raise ValueError("Message Queue Not Found")
+        sys.stderr.write("MQTT Host: %s \nMQTT Port: %s\n" % (mqtt_host, mqtt_port))
 
     app.run(debug=True, host='0.0.0.0', port=int("5000"))
 
