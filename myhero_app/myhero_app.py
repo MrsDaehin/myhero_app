@@ -11,7 +11,7 @@ __author__ = 'hapresto'
 from flask import Flask, make_response, request, jsonify, Response
 import datetime
 import urllib
-import json
+import json, random
 import os, sys, socket, dns.resolver
 import requests
 import paho.mqtt.publish as publish
@@ -189,7 +189,8 @@ def valid_request_check(request):
 def publish_vote(vote):
     # Basic Publish to a MQTT Queue
     print("Publishing vote.")
-    publish.single("MyHero-Votes/" + lhost, payload=vote, hostname=mqtt_host, port=mqtt_port, retain=True)
+    t = lhost + "-" + str(random.randint(0,9))
+    publish.single("MyHero-Votes/" + t, payload=vote, hostname=mqtt_host, port=mqtt_port, retain=True)
     return ""
 
 # Get SRV Lookup Details for Queueing Server
