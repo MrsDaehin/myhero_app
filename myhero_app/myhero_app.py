@@ -99,7 +99,7 @@ def options_route():
             # Verify data is of good format
             # { "option" : "Deadpool" }
             data_requests_headers = {"key": data_key}
-            print("New Option: " + data["option"])
+            sys.stderr.write("New Option: " + data["option"] + "\n")
             page = requests.put(u,json = data, headers= data_requests_headers)
             options = page.json()
             status = 201
@@ -129,7 +129,7 @@ def options_route():
             data_requests_headers = {"key": data_key}
             page = requests.post(u, json = data, headers = data_requests_headers)
             options = page.json()
-            print("New Options: " + options)
+            sys.stderr.write("New Options: " + options + "\n")
             status = 201
         except KeyError:
             error = {"Error": "API expects dictionary object with single element with key 'option' and value a list of options"}
@@ -155,7 +155,7 @@ def option_delete_route(option):
 
     u = data_server + "/options/" + option
     if request.method == "DELETE":
-        print("Delete Option:" + option)
+        sys.stderr.write("Delete Option:" + option + "\n")
         data_requests_headers = {"key": data_key}
         page = requests.delete(u, headers = data_requests_headers)
         options = page.json()
@@ -177,13 +177,13 @@ def valid_request_check(request):
             return (True, "")
         else:
             error = {"Error": "Invalid Key Provided."}
-            print error
+            sys.stderr.write(error + "\n")
             status = 401
             resp = Response(json.dumps(error), content_type='application/json', status=status)
             return (False, resp)
     except KeyError:
         error = {"Error": "Method requires authorization key."}
-        print error
+        sys.stderr.write(error + "\n")
         status = 400
         resp = Response(json.dumps(error), content_type='application/json', status=status)
         return (False, resp)
@@ -261,7 +261,7 @@ if __name__=='__main__':
             get_data_server = raw_input("What is the data server address? ")
             # print "Input Data: " + str(get_data_server)
             data_server = get_data_server
-    print "Data Server: " + data_server
+    # print "Data Server: " + data_server
     sys.stderr.write("Data Server: " + data_server + "\n")
 
     data_key = args.datakey
@@ -273,7 +273,7 @@ if __name__=='__main__':
             get_data_key = raw_input("What is the data server authentication key? ")
             # print "Input Data Key: " + str(get_data_key)
             data_key = get_data_key
-    print "Data Server Key: " + data_key
+    # print "Data Server Key: " + data_key
     sys.stderr.write("Data Server Key: " + data_key + "\n")
 
     app_key = args.appsecret
@@ -285,7 +285,7 @@ if __name__=='__main__':
             get_app_key = raw_input("What is the app server authentication key? ")
             # print "Input Data Key: " + str(get_app_key)
             app_key = get_app_key
-    print "App Server Key: " + app_key
+    # print "App Server Key: " + app_key
     sys.stderr.write("App Server Key: " + app_key + "\n")
 
     # The API Service can run in two modes, direct or queue
