@@ -16,6 +16,10 @@ import os, sys, socket, dns.resolver
 import requests
 import paho.mqtt.publish as publish
 
+# options_cache = ({'options':[]},datetime.datetime.now())
+options_cache = False
+results_cache = False
+
 app = Flask(__name__)
 
 mqtt_host = ""
@@ -70,11 +74,24 @@ def vote(hero):
 # TODO - Add Authentication
 @app.route("/results")
 def results():
-    u = urllib.urlopen(data_server + "/results")
-    page = u.read()
-    tally = json.loads(page)
+    global results_cache
+
+    # Check Cache
+    if results_cache and (datetime.datetime.now() - results_cache[1]).seconds < 60:
+        sys.stderr.write("*** Returning Cached Results ***\n")
+        tally = results_cache[0]
+    else:
+        # Get latest data and refresh cache
+        u = urllib.urlopen(data_server + "/results")
+        page = u.read()
+        tally = json.loads(page)
+        results_cache = (tally, datetime.datetime.now())
 
     resp = make_response(jsonify(tally))
+    resp = Response(
+        json.dumps(tally, sort_keys=True, indent = 4, separators = (',', ': ')),
+        content_type='application/json', headers={"data_timestamp":str(results_cache[1])},
+        status=200)
     return resp
 
 @app.route("/options", methods=["GET", "PUT", "POST"])
@@ -87,11 +104,21 @@ def options_route():
     if not authz[0]:
         return authz[1]
 
+    global options_cache
+
     u = data_server + "/options"
     if request.method == "GET":
-        data_requests_headers = {"key": data_key}
-        page = requests.get(u, headers=data_requests_headers)
-        options = page.json()
+        # Check Cache
+        if options_cache and (datetime.datetime.now() - options_cache[1]).seconds < 300:
+            sys.stderr.write("*** Returning Cached Options ***\n")
+            options = options_cache[0]
+            pass
+        else:
+            # Cache unvailable or expired
+            data_requests_headers = {"key": data_key}
+            page = requests.get(u, headers=data_requests_headers)
+            options = page.json()
+            options_cache = (options, datetime.datetime.now())
         status = 200
     if request.method == "PUT":
         try:
@@ -102,6 +129,7 @@ def options_route():
             sys.stderr.write("New Option: " + data["option"] + "\n")
             page = requests.put(u,json = data, headers= data_requests_headers)
             options = page.json()
+            options_cache = (options, datetime.datetime.now())
             status = 201
         except KeyError:
             error = {"Error":"API expects dictionary object with single element and key of 'option'"}
@@ -130,6 +158,7 @@ def options_route():
             page = requests.post(u, json = data, headers = data_requests_headers)
             options = page.json()
             sys.stderr.write("New Options: " + options + "\n")
+            options_cache = (options, datetime.datetime.now())
             status = 201
         except KeyError:
             error = {"Error": "API expects dictionary object with single element with key 'option' and value a list of options"}
@@ -139,7 +168,7 @@ def options_route():
 
     resp = Response(
         json.dumps(options, sort_keys=True, indent = 4, separators = (',', ': ')),
-        content_type='application/json',
+        content_type='application/json', headers={"data_timestamp":str(options_cache[1])},
         status=status)
     return resp
 
