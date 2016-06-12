@@ -157,7 +157,7 @@ def options_route():
             data_requests_headers = {"key": data_key}
             page = requests.post(u, json = data, headers = data_requests_headers)
             options = page.json()
-            sys.stderr.write("New Options: " + options + "\n")
+            sys.stderr.write("New Options:" + str(data["options"]) + "\n")
             options_cache = (options, datetime.datetime.now())
             status = 201
         except KeyError:
@@ -206,13 +206,13 @@ def valid_request_check(request):
             return (True, "")
         else:
             error = {"Error": "Invalid Key Provided."}
-            sys.stderr.write(error + "\n")
+            sys.stderr.write(str(error) + "\n")
             status = 401
             resp = Response(json.dumps(error), content_type='application/json', status=status)
             return (False, resp)
     except KeyError:
         error = {"Error": "Method requires authorization key."}
-        sys.stderr.write(error + "\n")
+        sys.stderr.write(str(error) + "\n")
         status = 400
         resp = Response(json.dumps(error), content_type='application/json', status=status)
         return (False, resp)
