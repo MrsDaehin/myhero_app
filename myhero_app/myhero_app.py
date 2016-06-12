@@ -157,7 +157,7 @@ def options_route():
             data_requests_headers = {"key": data_key}
             page = requests.post(u, json = data, headers = data_requests_headers)
             options = page.json()
-            sys.stderr.write("New Options: " + options + "\n")
+            sys.stderr.write("New Options:" + str(data["options"]) + "\n")
             options_cache = (options, datetime.datetime.now())
             status = 201
         except KeyError:
