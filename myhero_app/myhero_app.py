@@ -27,7 +27,8 @@ app = Flask(__name__)
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers',
-                         'Content-Type,Authorization,Key')
+                         'Content-Type,Authorization,Key,Total-Votes')
+    response.headers.add("Access-Control-Expose-Headers", "Total Votes")
     response.headers.add('Access-Control-Allow-Methods',
                          'GET,PUT,POST,DELETE,OPTIONS')
     return response
@@ -88,7 +89,7 @@ def results():
     global results_cache
 
     # Check Cache
-    if results_cache and (datetime.datetime.now() - results_cache[1]).seconds < 60:
+    if results_cache and (datetime.datetime.now() - results_cache[1]).seconds < 0:
         sys.stderr.write("*** Returning Cached Results ***\n")
         tally = results_cache[0]
     else:
@@ -104,6 +105,44 @@ def results():
         content_type='application/json', headers={"data_timestamp":str(results_cache[1])},
         status=200)
     return resp
+
+@app.route("/v2/results")
+def results_v2():
+    # ToDo: convert to requests from URLLib so that I can use headers
+    # ToDo: Get and return the "Total Counts" header for use in progress bars in the UI
+
+    # ToDo: build cache for v2 results
+    # global results_cache
+    #
+    # # Check Cache
+    # if results_cache and (datetime.datetime.now() - results_cache[1]).seconds < 0:
+    #     sys.stderr.write("*** Returning Cached Results ***\n")
+    #     tally = results_cache[0]
+    # else:
+    #     # Get latest data and refresh cache
+    #     u = urllib.urlopen(data_server + "/results")
+    #     page = u.read()
+    #     tally = json.loads(page)
+    #     results_cache = (tally, datetime.datetime.now())
+
+    # Get latest data and refresh cache
+    u = data_server + "/v2/results"
+    data_requests_headers = {"key": data_key}
+    page = requests.get(u, headers=data_requests_headers)
+    tally = page.json()
+    total_votes = page.headers["Total Votes"]
+
+    # u = urllib.urlopen(data_server + "/v2/results")
+    # page = u.read()
+    # tally = json.loads(page)
+
+    resp = make_response(jsonify(tally))
+    resp = Response(
+        json.dumps(tally, sort_keys=True, indent=4, separators=(',', ': ')),
+        content_type='application/json', headers={"data_timestamp": str(datetime.datetime.now()), "Total Votes": total_votes},
+        status=200)
+    return resp
+
 
 @app.route("/options", methods=["GET", "PUT", "POST"])
 def options_route():
@@ -290,7 +329,15 @@ if __name__=='__main__':
         "--mode", help="Voting Processing Mode - direct or queue", required=False
     )
 
+    parser.add_argument(
+        "--port", help="Port to listen on", required=False, default=5000
+    )
+
     args = parser.parse_args()
+
+    # Determine port number
+    listen = int(args.port)
+    print("Listen: " + str(listen))
 
     data_server = args.dataserver
     # print "Arg Data: " + str(data_server)
@@ -368,5 +415,5 @@ if __name__=='__main__':
                     raise ValueError("Message Queue Not Found")
         sys.stderr.write("MQTT Host: %s \nMQTT Port: %s\n" % (mqtt_host, mqtt_port))
 
-    app.run(debug=True, host='0.0.0.0', port=int("5000"))
+    app.run(debug=True, host='0.0.0.0', port=listen)
 
