@@ -27,7 +27,7 @@ app = Flask(__name__)
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers',
-                         'Content-Type,Authorization,Key,Total-Votes')
+                         'Content-Type,Authorization,Key,Total Votes')
     response.headers.add("Access-Control-Expose-Headers", "Total Votes")
     response.headers.add('Access-Control-Allow-Methods',
                          'GET,PUT,POST,DELETE,OPTIONS')
