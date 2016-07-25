@@ -45,6 +45,8 @@ Required
 
 # Basic Usage
 
+**ToDo - update Docs on support for SRV record to find the data server**
+
 In order to run, the service needs 3 pieces of information to be provided:
 * Data Server Address
 * Data Server Authentication Key to Use
