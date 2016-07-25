@@ -109,8 +109,10 @@ def results():
 
 @app.route("/v2/results")
 def results_v2():
-    # ToDo: convert to requests from URLLib so that I can use headers
-    # ToDo: Get and return the "Total Counts" header for use in progress bars in the UI
+    # Verify that the request is propery authorized
+    authz = valid_request_check(request)
+    if not authz[0]:
+        return authz[1]
 
     # ToDo: build cache for v2 results
     # global results_cache
@@ -133,11 +135,6 @@ def results_v2():
     tally = page.json()
     total_votes = page.headers["Total Votes"]
 
-    # u = urllib.urlopen(data_server + "/v2/results")
-    # page = u.read()
-    # tally = json.loads(page)
-
-    resp = make_response(jsonify(tally))
     resp = Response(
         json.dumps(tally, sort_keys=True, indent=4, separators=(',', ': ')),
         content_type='application/json', headers={"data_timestamp": str(datetime.datetime.now()), "Total Votes": total_votes},

@@ -45,8 +45,6 @@ Required
 
 # Basic Usage
 
-**ToDo - update Docs on support for SRV record to find the data server**
-
 In order to run, the service needs 3 pieces of information to be provided:
 * Data Server Address
 * Data Server Authentication Key to Use
@@ -68,7 +66,25 @@ These details can be provided in one of three ways.
 
 A command line argument overrides an environment variable, and raw input is only used if neither of the other two options provide needed details.
 
-# Vote Processing Mode
+# Alternate and Advanced Configurations
+
+## Finding Data Server Details with SRV Lookup
+
+If in your deployment, the myhero_data microservice is deployed in a way that the data server address (ie IP and Port) are dynamic, there is support for querying an SRV record to determine the details.
+
+An example of this type of setup would be deploying MyHero to a Mantl.io cluster where Consul.io is used for service discovery.  Rather than hard code in the address of the data server, you would query Consul for the address infromation.
+
+To use this method, you will provide a different argument or environment variable to the program.
+
+* As a command line argument
+  - `python myhero_app/myhero_app.py --datasrv "data-myhero.service.consul" --datakey "DATA AUTH KEY" --appsecret "APP AUTH KEY" `
+* As environment variables
+  - `export myhero_data_srv="data-myhero.service.consul"`
+  - `export myhero_data_key="DATA AUTH KEY"`
+  - `export myhero_app_key="APP AUTH KEY"`
+  - `python myhero_app/myhero_app.py`
+
+## Vote Processing Mode
 
 When an API request comes in to place a vote, there are two modes that the APP service can run in.
 
