@@ -46,3 +46,7 @@ notify:
       }
 
 
+  spark:
+    image: hpreston/drone-spark
+    roomId: $$SPARK_ROOM
+    auth_token: $$SPARK_TOKEN
