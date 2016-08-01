@@ -6,6 +6,7 @@
     The application was designed to provide a simple demo for Cisco Mantl
 '''
 
+
 __author__ = 'hapresto'
 
 from flask import Flask, make_response, request, jsonify, Response
@@ -27,7 +28,8 @@ app = Flask(__name__)
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers',
-                         'Content-Type,Authorization,Key')
+                         'Content-Type,Authorization,Key,Total Votes')
+    response.headers.add("Access-Control-Expose-Headers", "Total Votes")
     response.headers.add('Access-Control-Allow-Methods',
                          'GET,PUT,POST,DELETE,OPTIONS')
     return response
@@ -88,7 +90,7 @@ def results():
     global results_cache
 
     # Check Cache
-    if results_cache and (datetime.datetime.now() - results_cache[1]).seconds < 60:
+    if results_cache and (datetime.datetime.now() - results_cache[1]).seconds < 0:
         sys.stderr.write("*** Returning Cached Results ***\n")
         tally = results_cache[0]
     else:
@@ -104,6 +106,41 @@ def results():
         content_type='application/json', headers={"data_timestamp":str(results_cache[1])},
         status=200)
     return resp
+
+@app.route("/v2/results")
+def results_v2():
+    # Verify that the request is propery authorized
+    authz = valid_request_check(request)
+    if not authz[0]:
+        return authz[1]
+
+    # ToDo: build cache for v2 results
+    # global results_cache
+    #
+    # # Check Cache
+    # if results_cache and (datetime.datetime.now() - results_cache[1]).seconds < 0:
+    #     sys.stderr.write("*** Returning Cached Results ***\n")
+    #     tally = results_cache[0]
+    # else:
+    #     # Get latest data and refresh cache
+    #     u = urllib.urlopen(data_server + "/results")
+    #     page = u.read()
+    #     tally = json.loads(page)
+    #     results_cache = (tally, datetime.datetime.now())
+
+    # Get latest data and refresh cache
+    u = data_server + "/v2/results"
+    data_requests_headers = {"key": data_key}
+    page = requests.get(u, headers=data_requests_headers)
+    tally = page.json()
+    total_votes = page.headers["Total Votes"]
+
+    resp = Response(
+        json.dumps(tally, sort_keys=True, indent=4, separators=(',', ': ')),
+        content_type='application/json', headers={"data_timestamp": str(datetime.datetime.now()), "Total Votes": total_votes},
+        status=200)
+    return resp
+
 
 @app.route("/options", methods=["GET", "PUT", "POST"])
 def options_route():
@@ -272,6 +309,9 @@ if __name__=='__main__':
         "-d", "--dataserver", help="Address of data server", required=False
     )
     parser.add_argument(
+        "--datasrv", help="Address of data server SRV record", required=False
+    )
+    parser.add_argument(
         "-k", "--datakey", help="Data Server Authentication Key Used in API Calls", required=False
     )
     parser.add_argument(
@@ -290,19 +330,54 @@ if __name__=='__main__':
         "--mode", help="Voting Processing Mode - direct or queue", required=False
     )
 
+    parser.add_argument(
+        "--port", help="Port to listen on", required=False, default=5000
+    )
+
     args = parser.parse_args()
 
+    # Determine port number
+    listen = int(args.port)
+    print("Listen: " + str(listen))
+
+    # Priority for Data Server
+    # 1. Explicit Data Server Address
+    #    1. Arguments
     data_server = args.dataserver
+    data_srv = args.datasrv
     # print "Arg Data: " + str(data_server)
+    #    2. Env Vars
     if (data_server == None):
         data_server = os.getenv("myhero_data_server")
         # print "Env Data: " + str(data_server)
-        if (data_server == None):
-            get_data_server = raw_input("What is the data server address? ")
-            # print "Input Data: " + str(get_data_server)
-            data_server = get_data_server
+    # 2. SRV Address
+    if (data_server == None):
+    #    1. Arguement
+    #    2. Env Vars
+        if (data_srv == None):
+            data_srv = os.getenv("myhero_data_srv")
+        if (data_srv != None):
+            # Lookup and resolve the IP and Port for the Data Server by SRV Record
+            try:
+                records = srv_lookup(data_srv)
+                # To find the HOST IP address need to take the returned hostname from the
+                # SRV check and do an IP lookup on it
+                data_srv_host = str(ip_lookup(records[0][0]))
+                data_srv_port = records[0][1]
+            except ValueError:
+                raise ValueError("Data SRV Record Not Found")
+            # Create data_server format
+            data_server = "http://%s:%s" % (data_srv_host, data_srv_port)
+    # 3. Prompt
+    #    1. Address
+    if (data_server == None):
+        get_data_server = raw_input("What is the data server address? ")
+        # print "Input Data: " + str(get_data_server)
+        data_server = get_data_server
+
     # print "Data Server: " + data_server
     sys.stderr.write("Data Server: " + data_server + "\n")
+
 
     data_key = args.datakey
     # print "Arg Data Key: " + str(data_key)
@@ -368,5 +443,5 @@ if __name__=='__main__':
                     raise ValueError("Message Queue Not Found")
         sys.stderr.write("MQTT Host: %s \nMQTT Port: %s\n" % (mqtt_host, mqtt_port))
 
-    app.run(debug=True, host='0.0.0.0', port=int("5000"))
+    app.run(debug=True, host='0.0.0.0', port=listen)
 
