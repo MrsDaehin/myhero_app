@@ -42,6 +42,12 @@ mode = "direct"
 # Setup MQTT Topic Info
 lhost = socket.gethostname()
 
+data_server = None
+data_srv = None
+mqtt_server = None
+mqtt_host = None
+mqtt_port = None
+
 
 # TODO - Decide if this will be maintaned going forward
 @app.route("/hero_list")
@@ -66,7 +72,14 @@ def vote(hero):
             # print("Vote direct")
             u = data_server + "/vote/" + hero
             data_requests_headers = {"key": data_key}
-            page = requests.post(u, headers = data_requests_headers)
+
+            try:
+                page = requests.post(u, headers = data_requests_headers)
+            except:
+                set_data_server(data_srv)
+                u = data_server + "/vote/" + hero
+                page = requests.get(u, headers=data_requests_headers)
+
             result = page.json()["result"]
         elif mode == "queue":
             # print("Vote Q")
@@ -95,8 +108,14 @@ def results():
         tally = results_cache[0]
     else:
         # Get latest data and refresh cache
-        u = urllib.urlopen(data_server + "/results")
-        page = u.read()
+        try:
+            u = urllib.urlopen(data_server + "/results")
+            page = u.read()
+        except:
+            set_data_server(data_srv)
+            u = urllib.urlopen(data_server + "/results")
+            page = u.read()
+
         tally = json.loads(page)
         results_cache = (tally, datetime.datetime.now())
 
@@ -131,7 +150,14 @@ def results_v2():
     # Get latest data and refresh cache
     u = data_server + "/v2/results"
     data_requests_headers = {"key": data_key}
-    page = requests.get(u, headers=data_requests_headers)
+
+    try:
+        page = requests.get(u, headers=data_requests_headers)
+    except:
+        set_data_server(data_srv)
+        u = data_server + "/v2/results"
+        page = requests.get(u, headers=data_requests_headers)
+
     tally = page.json()
     total_votes = page.headers["Total Votes"]
 
@@ -164,7 +190,13 @@ def options_route():
         else:
             # Cache unvailable or expired
             data_requests_headers = {"key": data_key}
-            page = requests.get(u, headers=data_requests_headers)
+            try:
+                page = requests.get(u, headers=data_requests_headers)
+            except:
+                set_data_server(data_srv)
+                u = data_server + "/options"
+                page = requests.get(u, headers=data_requests_headers)
+
             options = page.json()
             options_cache = (options, datetime.datetime.now())
         status = 200
@@ -175,7 +207,13 @@ def options_route():
             # { "option" : "Deadpool" }
             data_requests_headers = {"key": data_key}
             sys.stderr.write("New Option: " + data["option"] + "\n")
-            page = requests.put(u,json = data, headers= data_requests_headers)
+            try:
+                page = requests.put(u,json = data, headers= data_requests_headers)
+            except:
+                set_data_server(data_srv)
+                u = data_server + "/options"
+                page = requests.put(u, json=data, headers=data_requests_headers)
+
             options = page.json()
             options_cache = (options, datetime.datetime.now())
             status = 201
@@ -203,7 +241,13 @@ def options_route():
             # ]
             # }
             data_requests_headers = {"key": data_key}
-            page = requests.post(u, json = data, headers = data_requests_headers)
+            try:
+                page = requests.post(u, json = data, headers = data_requests_headers)
+            except:
+                set_data_server(data_srv)
+                u = data_server + "/options"
+                page = requests.post(u, json = data, headers = data_requests_headers)
+
             options = page.json()
             sys.stderr.write("New Options:" + str(data["options"]) + "\n")
             options_cache = (options, datetime.datetime.now())
@@ -234,7 +278,14 @@ def option_delete_route(option):
     if request.method == "DELETE":
         sys.stderr.write("Delete Option:" + option + "\n")
         data_requests_headers = {"key": data_key}
-        page = requests.delete(u, headers = data_requests_headers)
+
+        try:
+            page = requests.delete(u, headers = data_requests_headers)
+        except:
+            set_data_server(data_srv)
+            u = data_server + "/options/" + option
+            page = requests.delete(u, headers=data_requests_headers)
+
         options = page.json()
         status = 202
         resp = Response(
@@ -269,7 +320,12 @@ def publish_vote(vote):
     # Basic Publish to a MQTT Queue
     # print("Publishing vote.")
     t = lhost + "-" + str(random.randint(0,9))
-    publish.single("MyHero-Votes/" + t, payload=vote, hostname=mqtt_host, port=mqtt_port, retain=True)
+    try:
+        publish.single("MyHero-Votes/" + t, payload=vote, hostname=mqtt_host, port=mqtt_port, retain=True)
+    except:
+        set_mqtt_server(mqtt_server)
+        publish.single("MyHero-Votes/" + t, payload=vote, hostname=mqtt_host, port=mqtt_port, retain=True)
+
     return ""
 
 # Get SRV Lookup Details for Queueing Server
@@ -300,7 +356,42 @@ def ip_lookup(name):
         raise ValueError("Can't find A Record")
     return results
 
+def set_data_server(data_srv):
+    sys.stderr.write("Looking up Data Service Address: %s.\n" % (data_srv))
 
+    global data_server
+    # Lookup and resolve the IP and Port for the Data Server by SRV Record
+    try:
+        records = srv_lookup(data_srv)
+        # To find the HOST IP address need to take the returned hostname from the
+        # SRV check and do an IP lookup on it
+        data_srv_host = str(ip_lookup(records[0][0]))
+        data_srv_port = records[0][1]
+    except ValueError:
+        raise ValueError("Data SRV Record Not Found")
+        sys.exit(1)
+    # Create data_server format
+    data_server = "http://%s:%s" % (data_srv_host, data_srv_port)
+    sys.stderr.write("Data Server: " + data_server + "\n")
+
+
+def set_mqtt_server(mqtt_server):
+    sys.stderr.write("Looking up MQTT Service Address: %s.\n" % (mqtt_server))
+
+    global mqtt_host
+    global mqtt_port
+    # Lookup and resolve the IP and Port for the MQTT Server
+    try:
+        records = srv_lookup(mqtt_server)
+        if len(records) != 1: raise Exception("More than 1 SRV Record Returned")
+        # To find the HOST IP address need to take the returned hostname from the
+        # SRV check and do an IP lookup on it
+        mqtt_host = str(ip_lookup(records[0][0]))
+        mqtt_port = records[0][1]
+    except ValueError:
+        raise ValueError("Message Queue Not Found")
+        sys.exit(1)
+    sys.stderr.write("MQTT Host: %s \nMQTT Port: %s\n" % (mqtt_host, mqtt_port))
 
 if __name__=='__main__':
     from argparse import ArgumentParser
@@ -357,17 +448,8 @@ if __name__=='__main__':
         if (data_srv == None):
             data_srv = os.getenv("myhero_data_srv")
         if (data_srv != None):
-            # Lookup and resolve the IP and Port for the Data Server by SRV Record
-            try:
-                records = srv_lookup(data_srv)
-                # To find the HOST IP address need to take the returned hostname from the
-                # SRV check and do an IP lookup on it
-                data_srv_host = str(ip_lookup(records[0][0]))
-                data_srv_port = records[0][1]
-            except ValueError:
-                raise ValueError("Data SRV Record Not Found")
-            # Create data_server format
-            data_server = "http://%s:%s" % (data_srv_host, data_srv_port)
+            # Turn into function here..
+            set_data_server(data_srv)
     # 3. Prompt
     #    1. Address
     if (data_server == None):
@@ -376,7 +458,7 @@ if __name__=='__main__':
         data_server = get_data_server
 
     # print "Data Server: " + data_server
-    sys.stderr.write("Data Server: " + data_server + "\n")
+    # sys.stderr.write("Data Server: " + data_server + "\n")
 
 
     data_key = args.datakey
@@ -431,17 +513,9 @@ if __name__=='__main__':
                     if (mqtt_server == None):
                         mqtt_server = raw_input("What is the MQTT Server FQDN for an SRV Lookup? ")
                 sys.stderr.write("MQTT Server: " + mqtt_server + "\n")
-                # Lookup and resolve the IP and Port for the MQTT Server
-                try:
-                    records = srv_lookup(mqtt_server)
-                    if len(records) != 1: raise Exception("More than 1 SRV Record Returned")
-                    # To find the HOST IP address need to take the returned hostname from the
-                    # SRV check and do an IP lookup on it
-                    mqtt_host = str(ip_lookup(records[0][0]))
-                    mqtt_port = records[0][1]
-                except ValueError:
-                    raise ValueError("Message Queue Not Found")
-        sys.stderr.write("MQTT Host: %s \nMQTT Port: %s\n" % (mqtt_host, mqtt_port))
+
+                # Function to set the MQTT Server
+                set_mqtt_server(mqtt_server)
 
     app.run(debug=True, host='0.0.0.0', port=listen)
 
