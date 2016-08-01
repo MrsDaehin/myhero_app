@@ -374,7 +374,6 @@ def set_data_server(data_srv):
     data_server = "http://%s:%s" % (data_srv_host, data_srv_port)
     sys.stderr.write("Data Server: " + data_server + "\n")
 
-
 def set_mqtt_server(mqtt_server):
     sys.stderr.write("Looking up MQTT Service Address: %s.\n" % (mqtt_server))
 
