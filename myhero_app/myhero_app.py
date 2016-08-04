@@ -300,6 +300,7 @@ def option_delete_route(option):
         return resp
 
 def valid_request_check(request):
+    return (True, "")
     try:
         if request.headers["key"] == app_key:
             return (True, "")
