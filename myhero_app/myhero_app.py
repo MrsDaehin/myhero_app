@@ -434,7 +434,7 @@ if __name__=='__main__':
     # 1. Explicit Data Server Address
     #    1. Arguments
     data_server = args.dataserver
-    data_srv = args.datasrv
+    data_srv = str(args.datasrv)
     # print "Arg Data: " + str(data_server)
     #    2. Env Vars
     if (data_server == None):
