@@ -20,6 +20,11 @@ ADD . /app
 WORKDIR /app
 RUN pip install --requirement ./requirements.txt
 
-CMD [ "python", "./myhero_app/myhero_app.py", "-v 'data-demo.service.consul'", "-k demo", "-s demo" ]
+ENV myhero_app_key=demo \
+    myhero_data_key=demo \
+    myhero_data_srv=data-demo.service.consul
+
+CMD [ "python", "./myhero_app/myhero_app.py"]
+
 
 
