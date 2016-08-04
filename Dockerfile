@@ -20,5 +20,6 @@ ADD . /app
 WORKDIR /app
 RUN pip install --requirement ./requirements.txt
 
-CMD [ "python", "./myhero_app/myhero_app.py" ]
+CMD [ "python", "./myhero_app/myhero_app.py", "-v 'data-demo.service.consul'", "-k demo", "-s demo" ]
+
 

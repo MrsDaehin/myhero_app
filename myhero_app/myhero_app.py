@@ -399,7 +399,7 @@ if __name__=='__main__':
         "-d", "--dataserver", help="Address of data server", required=False
     )
     parser.add_argument(
-        "--datasrv", help="Address of data server SRV record", required=False
+        "-v", "--datasrv", help="Address of data server SRV record", required=False
     )
     parser.add_argument(
         "-k", "--datakey", help="Data Server Authentication Key Used in API Calls", required=False
