@@ -28,8 +28,8 @@ app = Flask(__name__)
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers',
-                         'Content-Type,Authorization,Key,Total Votes')
-    response.headers.add("Access-Control-Expose-Headers", "Total Votes")
+                         'Content-Type,Authorization,Key')
+    # response.headers.add("Access-Control-Expose-Headers", "Total Votes")
     response.headers.add('Access-Control-Allow-Methods',
                          'GET,PUT,POST,DELETE,OPTIONS')
     return response
@@ -97,8 +97,8 @@ def vote(hero):
             status=status)
         return resp
 
-# TODO - Add Authentication
-@app.route("/results")
+# TODO - Retire this API call
+# @app.route("/results")
 def results():
     global results_cache
 
@@ -159,11 +159,11 @@ def results_v2():
         page = requests.get(u, headers=data_requests_headers)
 
     tally = page.json()
-    total_votes = page.headers["Total Votes"]
+    # total_votes = page.headers["Total Votes"]
 
     resp = Response(
         json.dumps(tally, sort_keys=True, indent=4, separators=(',', ': ')),
-        content_type='application/json', headers={"data_timestamp": str(datetime.datetime.now()), "Total Votes": total_votes},
+        content_type='application/json', headers={"data_timestamp": str(datetime.datetime.now())},
         status=200)
     return resp
 
