@@ -97,8 +97,8 @@ def vote(hero):
             status=status)
         return resp
 
-# TODO - Add Authentication
-@app.route("/results")
+# TODO - Retire this API call
+# @app.route("/results")
 def results():
     global results_cache
 
