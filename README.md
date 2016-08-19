@@ -4,14 +4,17 @@ This is the App Service for a basic microservice demo application.
 This provides a logic layer for a voting system where users can vote for their favorite movie superhero.
 
 Details on deploying the entire demo to a Mantl cluster can be found at
+
 * MyHero Demo - [hpreston/myhero_demo](https://github.com/hpreston/myhero_demo)
 
 The application was designed to provide a simple demo for Cisco Mantl.  It is written as a simple Python Flask application and deployed as a docker container.
 
 Other services are:
+
 * Data - [hpreston/myhero_data](https://github.com/hpreston/myhero_data)
 * App - [hpreston/myhero_app](https://github.com/hpreston/myhero_app)
 * Web - [hpreston/myhero_web](https://github.com/hpreston/myhero_web)
+* UI - [hpreston/myhero_ui](https://github.com/hpreston/myhero_ui)
 * Ernst - [hpreston/myhero_ernst](https://github.com/hpreston/myhero_ernst)
   * Optional Service used along with an MQTT server when App is in "queue" mode
 * Spark Bot - [hpreston/myhero_spark](https://github.com/hpreston/myhero_spark)
@@ -21,9 +24,11 @@ Other services are:
 
 
 The docker containers are available at
+
 * Data - [hpreston/myhero_data](https://hub.docker.com/r/hpreston/myhero_data)
 * App - [hpreston/myhero_app](https://hub.docker.com/r/hpreston/myhero_app)
 * Web - [hpreston/myhero_web](https://hub.docker.com/r/hpreston/myhero_web)
+* UI - [hpreston/myhero_ui](https://hub.docker.com/r/hpreston/myhero_ui)
 * Ernst - [hpreston/myhero_ernst](https://hub.docker.com/r/hpreston/myhero_ernst)
   * Optional Service used along with an MQTT server when App is in "queue" mode
 * Spark Bot - [hpreston/myhero_spark](https://hub.docker.com/r/hpreston/myhero_spark)
@@ -46,11 +51,13 @@ Required
 # Basic Usage
 
 In order to run, the service needs 3 pieces of information to be provided:
+
 * Data Server Address
 * Data Server Authentication Key to Use
 * Application Server Authentication Key to Require
 
 These details can be provided in one of three ways.
+
 * As a command line argument
   - `python myhero_app/myhero_app.py --dataserver "http://myhero-data.server.com" --datakey "DATA AUTH KEY" --appsecret "APP AUTH KEY" `
 * As environment variables
@@ -108,6 +115,7 @@ To leverage the direct mode, nothing needs to be done, this is the default.  To 
 
 Initial and Basic APIs.
 These are v1 APIs that require no authentication and will eventually be removed
+
 * Basic List of Hero Choices
   * `curl http://localhost:5000/hero_list`
 * Current results calculations
@@ -117,6 +125,7 @@ These are v1 APIs that require no authentication and will eventually be removed
 
 New v2 APIs
 These newer APIs require authentication as well as support more features
+
 * Get the current list of options for voting
   * `curl -X GET -H "key: APP AUTH KEY" http://localhost:5000/options`
 * Add a new option to the list
@@ -136,6 +145,7 @@ These newer APIs require authentication as well as support more features
 I've included the configuration files needed to do local development with Vagrant in the repo.  Vagrant will still use Docker for local development and is configured to spin up a CentOS7 host VM for running the container.
 
 To start local development run:
+
 * `vagrant up`
   - You may need to run this twice.  The first time to start the docker host, and the second to start the container.
 * Now you can interact with the API or interface at localhost:15001 (configured in Vagrantfile and Vagrantfile.host)
