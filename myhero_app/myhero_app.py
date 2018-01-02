@@ -520,8 +520,3 @@ if __name__=='__main__':
                 set_mqtt_server(mqtt_server)
 
     app.run(debug=True, host='0.0.0.0', port=listen)
-<<<<<<< HEAD
-
-
-=======
->>>>>>> master
