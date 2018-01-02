@@ -142,13 +142,15 @@ These newer APIs require authentication as well as support more features
 
 # Local Development with Vagrant
 
-I've included the configuration files needed to do local development with Vagrant in the repo.  Vagrant will still use Docker for local development and is configured to spin up a CentOS7 host VM for running the container.
+I've included the configuration files needed to do local development with Vagrant in the repo.  Vagrant will still use Docker for local development and requires the following be installed on your laptop: 
+
+* [Vagrant 2.0.1 or higher](https://www.vagrantup.com/downloads.html)
+* [Docker](https://www.docker.com/community-edition)
 
 To start local development run:
 
 * `vagrant up`
-  - You may need to run this twice.  The first time to start the docker host, and the second to start the container.
-* Now you can interact with the API or interface at localhost:15001 (configured in Vagrantfile and Vagrantfile.host)
+* Now you can interact with the API or interface at localhost:15001 (configured in Vagrantfile)
   - example:  from your local machine `curl -H "key: DevApp" http://localhost:15001/options`
   - Environment Variables are configured in Vagrantfile for development
 
