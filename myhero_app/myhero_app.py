@@ -48,6 +48,9 @@ mqtt_server = None
 mqtt_host = None
 mqtt_port = None
 
+@app.route("/health", methods=["GET"])
+def health_check():
+    return "Service up."
 
 # TODO - Decide if this will be maintaned going forward
 @app.route("/hero_list")
@@ -517,5 +520,8 @@ if __name__=='__main__':
                 set_mqtt_server(mqtt_server)
 
     app.run(debug=True, host='0.0.0.0', port=listen)
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> master
